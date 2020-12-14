@@ -1,41 +1,29 @@
-const socket = io('http://localhost:8000');
-const socket2 = io('http://localhost:8000/admin');
+const username = prompt('What is your username?');
 
-// socket.on('connect', () => {
-//   console.log(socket.id);
-// });
-
-// socket2.on('connect', () => {
-//   console.log(socket2.id);
-// });
-
-socket.on('joined', (msg) => {
-  console.log(msg);
-}); 
-
-socket2.on('welcome', (msg) => {
-  console.log(msg);
+// Send username through handshake in the query object.
+const socket = io('http://localhost:5500', {
+  query: {
+    username,
+  },
 });
 
-// socket.on('ping', () => {
-//   console.log('Ping was receive from server');
-// });
-// socket.on('pong', (latency) => {
-//   console.log(latency);
-//   console.log('Pong was sent to server.');
-// });
+// We made global variable so we can access everywhere.
+let nsSocket;
 
-socket.on('messageFromServer', (dataFromServer) => {
-  // console.log(dataFromServer);
-  socket.emit('messageToServer', { data: 'Hello from the client!' });
+// nsData is array of obj receive from server upon connected.
+socket.on('nsList', (nsData) => {
+  let namespacesDiv = document.querySelector('.namespaces');
+  namespacesDiv.innerHTML = '';
+  nsData.forEach((ns) => {
+    namespacesDiv.innerHTML += `<div class="namespace" ns="${ns.endpoint}"><img src="${ns.img}"/></div>`;
+  });
+  Array.from(document.getElementsByClassName('namespace')).forEach((element) => {
+    element.addEventListener('click', (event) => {
+      const nsEndpoint = element.getAttribute('ns');
+      // This is making user join selected room.
+      joinNs(nsEndpoint);
+    });
+  });
+  // This is making user join default room of wiki on first page load.
+  joinNs('/wiki');
 });
-
-document.querySelector('#message-form').addEventListener('submit', (event) => {
-  event.preventDefault();
-  const newMessage = document.querySelector('#user-message').value;
-  socket.emit('newMessageToServer', { text: newMessage });
-});
-
-// socket.on('messageToClients', (msg) => {
-//   document.querySelector('#messages').innerHTML += `<li>${msg.text}</li>`;
-// });
